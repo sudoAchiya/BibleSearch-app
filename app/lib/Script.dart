@@ -64,32 +64,37 @@ class Script {
 
   static Future<List<String>> search(String searchTerm, int chosenPercent, String filePath) async {
     List<String> results;
+    DateTime startTime = DateTime.now();
     if (filePath == "bible.txt") {
       results = await searchInBible(
           searchTerm, countWords(searchTerm), chosenPercent, books, filePath);
     } else {
       results = await searchInBibleH(searchTerm, countWords(searchTerm), chosenPercent, booksH, filePath);
     }
+    DateTime endTime = DateTime.now();
+    Duration elapsedTime = endTime.difference(startTime);
+  
+    print('Elapsed time: ${elapsedTime.inSeconds} seconds');
     return results;
   }
 
   static Future<List<String>> searchInBibleH(String searchTerm, int numWords,
     int chosenPercent, List<String> chosenBooks, String filePath) async {
     List<String> results = [];
-    double maxPercent = 0;
+    int maxPercent = 0;
     bool flag = false;
     String currentBook ="";
     try {
       String fileContents = await rootBundle.loadString(filePath);
       LineSplitter.split(fileContents).forEach((line)  {
         if (line.startsWith("\$:")) {
-          String currentBook = line.split(":")[1].trim();
+          currentBook = line.split(":")[1].trim();
           flag = chosenBooks.contains(currentBook);
         } else if (flag) {
           String verseText = line.trim();
           List<String> versePartsList = createWordGroups(numWords, verseText);
           List<String> match = bestMatch(searchTerm, versePartsList, currentBook, verseText);
-          double percent = double.parse(match[1]);
+          int percent = int.parse(match[1]);
           if (maxPercent < percent) {
             maxPercent = percent;
           }
@@ -97,9 +102,9 @@ class Script {
           if (percent >= chosenPercent) {
             String currentVerse = verseText.split(RegExp(r'\s+'))[0].split(":")[1];
             String currentChapter = verseText.split(RegExp(r'\s+'))[0].split(":")[0];
-            String words = verseText.split(RegExp(r'\s+')).sublist(1).join(" ");
+            String verse = verseText.split(RegExp(r'\s+')).sublist(1).join(" ");
             results.add(
-                "$currentBook@$currentChapter@$currentVerse@$words@${match[0]}@$percent");
+                "ספר: $currentBook פרק: $currentChapter פסוק: $currentVerse\n $verse\n אחוזי התאמה: $percent\n מילה מתאימה: ${match[0]}\n---------------------------------------------");
           }
         }
       });
@@ -107,7 +112,13 @@ class Script {
     catch (e) {
       print(e);
     }
-
+    results.sort((a, b) {
+    // Extract percentages from strings
+    int percentA = int.parse(a.split('אחוזי התאמה: ')[1].split(' ')[0]);
+    int percentB = int.parse(b.split('אחוזי התאמה: ')[1].split(' ')[0]);
+    // Compare percentages
+    return percentB.compareTo(percentA); // Sorting in descending order
+    });
     return results;
   }
 
@@ -217,12 +228,12 @@ class Script {
   static List<String> bestMatch(
       String searchTerm, List<String> list, String currentBook, String currentVerse) {
     String maxMatch = "";
-    double maxSimilarity = 0;
+    int maxSimilarity = 0;
 
     for (String wordGroup in list) {
       int distance = getLevenshteinDistance(wordGroup, searchTerm);
       int maxLength = [wordGroup.length, searchTerm.length].reduce((a, b) => a > b ? a : b);
-      double similarity = ((maxLength - distance) / maxLength) * 100;
+      int similarity = (((maxLength - distance) / maxLength) * 100).toInt();
 
       if (similarity > maxSimilarity) {
         maxSimilarity = similarity;

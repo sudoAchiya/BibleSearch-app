@@ -77,27 +77,34 @@ class _SearchBarState extends State<_SearchBar> {
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                    title: Text(_isHebrew ? 'תוצאות חיפוש' : 'Search Results'),
-                    content: SizedBox(
-                      width: double.maxFinite,
-                      child: ListView.builder(
-                        itemCount: results.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return ListTile(
-                            title: Text(results[index]),
-                          );
-                        },
+                      title: Text(
+                        _isHebrew ? 'תוצאות חיפוש' : 'Search Results',
+                        textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
                       ),
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('סגור' ), // Close
+                      content: SizedBox(
+                        width: double.maxFinite,
+                        child: ListView.builder(
+                          itemCount: results.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return ListTile(
+                              title: Text(
+                                results[index],
+                                textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ],
-                  );
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('סגור' ), // Close
+                        ),
+                      ],
+                    );
+
                 },
               );
             },
