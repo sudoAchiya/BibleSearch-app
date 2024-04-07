@@ -104,7 +104,7 @@ class Script {
             String currentChapter = verseText.split(RegExp(r'\s+'))[0].split(":")[0];
             String verse = verseText.split(RegExp(r'\s+')).sublist(1).join(" ");
             results.add(
-                "ספר: $currentBook פרק: $currentChapter פסוק: $currentVerse\n $verse\n אחוזי התאמה: $percent\n מילה מתאימה: ${match[0]}\n---------------------------------------------");
+                "ספר: $currentBook פרק: $currentChapter פסוק: $currentVerse\n $verse\n אחוזי התאמה: $percent\n מילה מתאימה: ${match[0]}\n-----------------------------------");
           }
         }
       });
