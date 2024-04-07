@@ -26,5 +26,5 @@ flutter:
     - assets/bibleHN.txt
     - assets/bibleH.txt
     - assets/bible.txt
-  
+    - assets/icons/ 
   uses-material-design: true

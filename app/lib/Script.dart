@@ -26,11 +26,6 @@ class Script {
     "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", 
     "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"
   ];
-
-  static String reverse(String input) {
-    return input.split('').reversed.join('');
-  }
-
   static String decodeUnicode(String encodedStr) {
     StringBuffer sb = StringBuffer();
     int i = 0;
@@ -225,22 +220,24 @@ class Script {
     return p[n];
   }
 
-  static List<String> bestMatch(
-      String searchTerm, List<String> list, String currentBook, String currentVerse) {
-    String maxMatch = "";
+  static List<String> bestMatch(String searchTerm, List<String> list, String currentBook, String currentVerse) {
+    String maxMatch = "aa";
     int maxSimilarity = 0;
-
+    try{
     for (String wordGroup in list) {
-      int distance = getLevenshteinDistance(wordGroup, searchTerm);
-      int maxLength = [wordGroup.length, searchTerm.length].reduce((a, b) => a > b ? a : b);
-      int similarity = (((maxLength - distance) / maxLength) * 100).toInt();
-
-      if (similarity > maxSimilarity) {
-        maxSimilarity = similarity;
-        maxMatch = wordGroup;
+      if (wordGroup[0]==searchTerm[0]||wordGroup[1]==searchTerm[1]||wordGroup[1]==searchTerm[0]||wordGroup[0]==searchTerm[1]) {//fast search
+          int distance = getLevenshteinDistance(wordGroup, searchTerm);
+          int maxLength = [wordGroup.length, searchTerm.length].reduce((a, b) => a > b ? a : b);
+          int similarity = (((maxLength - distance) / maxLength) * 100).toInt();
+          if (similarity > maxSimilarity) {
+            maxSimilarity = similarity;
+            maxMatch = wordGroup;
+          }
       }
     }
-
+    }
+    // ignore: empty_catches
+    on RangeError {}
     return [maxMatch, maxSimilarity.toString()];
   }
 }
