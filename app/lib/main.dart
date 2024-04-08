@@ -10,7 +10,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,23 +22,24 @@ class MyApp extends StatelessWidget {
             'BibleSearch',
             style: TextStyle(color: Colors.white),
           ),
-          actions: [
-            Expanded(
+        ),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 20),
+            _SearchBar(), // Search bar widget
+            const SizedBox(height: 20), // Add space between search bar and selectors
+            Center(
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _SearchBar(), // Search bar widget
-                  const SizedBox(width: 10), // Add some space between the search bar and dropdown button
                   _PercentageDropdownButton(), // Custom dropdown button for percentage choice
+                  const SizedBox(width: 20), // Add space between selectors
+                  _LanguageDropdownButton(), // Language selector dropdown button
                 ],
               ),
             ),
           ],
-        ),
-        body: Container(
-          margin: const EdgeInsets.all(10),
-          padding: const EdgeInsets.all(10),
-          child: const Center(child: Text("")),
         ),
       ),
     );
@@ -53,11 +54,12 @@ class _SearchBar extends StatefulWidget {
 class _SearchBarState extends State<_SearchBar> {
   final TextEditingController _searchController = TextEditingController();
 
-  bool _isHebrew = false;
+  bool _isHebrew = true;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: TextField(
         controller: _searchController,
         textInputAction: TextInputAction.search,
@@ -68,7 +70,7 @@ class _SearchBarState extends State<_SearchBar> {
           suffixIcon: IconButton(
             onPressed: () async {
               String searchTerm = _searchController.text;
-              String filePath = "assets/bibleHN.txt"; // Assuming you're using the Hebrew Bible file
+              String filePath = _getFilePath();
               int chosenPercent = PercentageDropdownController.of(context).percentageNotifier.value;
               List<String> results = await Script.search(searchTerm, chosenPercent, filePath);
               // Display results in the app
@@ -77,34 +79,33 @@ class _SearchBarState extends State<_SearchBar> {
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                      title: Text(
-                        _isHebrew ? 'תוצאות חיפוש' : 'Search Results',
-                        textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
+                    title: Text(
+                      _isHebrew ? 'תוצאות חיפוש' : 'Search Results',
+                      textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
+                    ),
+                    content: SizedBox(
+                      width: double.maxFinite,
+                      child: ListView.builder(
+                        itemCount: results.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return ListTile(
+                            title: Text(
+                              results[index],
+                              textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
+                            ),
+                          );
+                        },
                       ),
-                      content: SizedBox(
-                        width: double.maxFinite,
-                        child: ListView.builder(
-                          itemCount: results.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            return ListTile(
-                              title: Text(
-                                results[index],
-                                textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
-                              ),
-                            );
-                          },
-                        ),
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('סגור'), // Close
                       ),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('סגור' ), // Close
-                        ),
-                      ],
-                    );
-
+                    ],
+                  );
                 },
               );
             },
@@ -130,6 +131,12 @@ class _SearchBarState extends State<_SearchBar> {
     // Check if the text contains Hebrew characters
     final RegExp regex = RegExp(r'[\u0590-\u05FF\s]+');
     return regex.hasMatch(text);
+  }
+
+  String _getFilePath() {
+    final languageDropdownState = PercentageDropdownController.of(context)._languageDropdownButtonState;
+    final selectedLanguage = languageDropdownState.getSelectedLanguage();
+    return selectedLanguage == 'English' ? 'assets/bible.txt' : 'assets/bibleH.txt';
   }
 }
 
@@ -158,24 +165,22 @@ class _PercentageDropdownButton extends StatelessWidget {
   }
 }
 
-
 class PercentageDropdownController extends StatefulWidget {
   final Widget child;
 
-  const PercentageDropdownController({super.key, required this.child});
+  const PercentageDropdownController({Key? key, required this.child}) : super(key: key);
 
-  // ignore: library_private_types_in_public_api
   static _PercentageDropdownControllerState of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<_PercentageDropdownController>()!.controller;
   }
 
   @override
-  // ignore: library_private_types_in_public_api
   _PercentageDropdownControllerState createState() => _PercentageDropdownControllerState();
 }
 
 class _PercentageDropdownControllerState extends State<PercentageDropdownController> {
   late ValueNotifier<int> _selectedPercentageNotifier;
+  late _LanguageDropdownButtonState _languageDropdownButtonState;
 
   ValueNotifier<int> get percentageNotifier => _selectedPercentageNotifier;
 
@@ -197,6 +202,10 @@ class _PercentageDropdownControllerState extends State<PercentageDropdownControl
     _selectedPercentageNotifier.value = newPercentage;
   }
 
+  void setLanguageDropdownButtonState(_LanguageDropdownButtonState state) {
+    _languageDropdownButtonState = state;
+  }
+
   @override
   void dispose() {
     _selectedPercentageNotifier.dispose();
@@ -204,14 +213,49 @@ class _PercentageDropdownControllerState extends State<PercentageDropdownControl
   }
 }
 
-
 class _PercentageDropdownController extends InheritedWidget {
   final _PercentageDropdownControllerState controller;
 
-  const _PercentageDropdownController({required this.controller, required super.child});
+  const _PercentageDropdownController({Key? key, required this.controller, required Widget child})
+      : super(key: key, child: child);
 
   @override
   bool updateShouldNotify(_PercentageDropdownController oldWidget) {
     return oldWidget.controller != controller;
+  }
+}
+
+class _LanguageDropdownButton extends StatefulWidget {
+  @override
+  _LanguageDropdownButtonState createState() => _LanguageDropdownButtonState();
+}
+
+class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
+  String _selectedLanguage = 'English'; // Default language
+
+  String getSelectedLanguage() {
+    return _selectedLanguage;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final percentageController = PercentageDropdownController.of(context);
+    percentageController.setLanguageDropdownButtonState(this);
+
+    return DropdownButton<String>(
+      value: _selectedLanguage,
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedLanguage = newValue!;
+        });
+      },
+      items: <String>['English', 'Hebrew'] // Define your language options here
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+    );
   }
 }
