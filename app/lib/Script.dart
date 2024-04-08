@@ -1,7 +1,6 @@
 // ignore_for_file: file_names, avoid_print
 
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 
 
@@ -60,16 +59,15 @@ class Script {
   static Future<List<String>> search(String searchTerm, int chosenPercent, String filePath) async {
     List<String> results;
     DateTime startTime = DateTime.now();
-    if (filePath == "bible.txt") {
-      results = await searchInBible(
-          searchTerm, countWords(searchTerm), chosenPercent, books, filePath);
+    if (filePath == "assets/bible.txt") {
+      results = await searchInBible(searchTerm, countWords(searchTerm), chosenPercent, books, filePath);
     } else {
       results = await searchInBibleH(searchTerm, countWords(searchTerm), chosenPercent, booksH, filePath);
     }
     DateTime endTime = DateTime.now();
     Duration elapsedTime = endTime.difference(startTime);
   
-    print('Elapsed time: ${elapsedTime.inSeconds} seconds');
+    print('Elapsed time: ${elapsedTime.inMilliseconds} miliseconds');
     return results;
   }
 
@@ -99,7 +97,7 @@ class Script {
             String currentChapter = verseText.split(RegExp(r'\s+'))[0].split(":")[0];
             String verse = verseText.split(RegExp(r'\s+')).sublist(1).join(" ");
             results.add(
-                "ספר: $currentBook פרק: $currentChapter פסוק: $currentVerse\n $verse\n אחוזי התאמה: $percent\n מילה מתאימה: ${match[0]}\n-----------------------------------");
+                "ספר: $currentBook פרק: $currentChapter פסוק: $currentVerse\n $verse\n אחוזי התאמה: $percent\n חלק מתאים: ${match[0]}\n-----------------------------------");
           }
         }
       });
@@ -116,43 +114,56 @@ class Script {
     });
     return results;
   }
+  static String highlightMatch(String text, String searchTerm) {
+    int startIndex = text.indexOf(searchTerm);
+    if (startIndex == -1) return text;
 
-  static Future<List<String>> searchInBible(String searchTerm, int numWords,
-      int chosenPercent, List<String> chosenBooks, String filePath) async {
+    String highlightedText = "${text.substring(0, startIndex)} ";
+    highlightedText += '\u001b[34m$searchTerm\u001b[0m'+" "; // ANSI escape code for blue color
+    highlightedText += text.substring(startIndex + searchTerm.length);
+    print(highlightedText);
+    return highlightedText;
+  }
+  static Future<List<String>> searchInBible(String searchTerm, int numWords,int chosenPercent, List<String> chosenBooks, String filePath) async {
     List<String> results = [];
-    double maxPercent = 0;
+    int maxPercent = 0;
     bool flag = false;
     String currentBook ="";
     try {
-      File file = File(filePath);
-      Stream<List<int>> inputStream = file.openRead();
-
-      await for (String line in inputStream.transform(utf8.decoder).transform(const LineSplitter())) {
+      String fileContents = await rootBundle.loadString(filePath);
+      LineSplitter.split(fileContents).forEach((line)  {
         if (line.startsWith("T:")) {
-          String currentBook = line.split(":")[1].trim();
+          currentBook = line.split(":")[1].trim();
           flag = chosenBooks.contains(currentBook);
         } else if (flag) {
           String verseText = line.trim();
           List<String> versePartsList = createWordGroups(numWords, verseText);
-          List<String> match =
-              bestMatch(searchTerm, versePartsList, currentBook, verseText);
-          double percent = double.parse(match[1]);
+          List<String> match = bestMatch(searchTerm, versePartsList, currentBook, verseText);
+          int percent = int.parse(match[1]);
           if (maxPercent < percent) {
             maxPercent = percent;
           }
+          
           if (percent >= chosenPercent) {
             String currentVerse = verseText.split(RegExp(r'\s+'))[0].split(":")[1];
             String currentChapter = verseText.split(RegExp(r'\s+'))[0].split(":")[0];
-            String words = verseText.split(RegExp(r'\s+')).sublist(1).join(" ");
-            results.add(
-                "$currentBook@$currentChapter@$currentVerse@$words@${match[0]}@$percent");
+            String verse = verseText.split(RegExp(r'\s+')).sublist(1).join(" ");
+            String highlightedVerse = highlightMatch(verse, searchTerm);
+            results.add("Book: $currentBook Chapter: $currentChapter Verse: $currentVerse\n $highlightedVerse\n Match percent: $percent\n Matching part: ${match[0]}\n-----------------------------------");
           }
         }
-      }
-    } catch (e) {
+      });
+    } 
+    catch (e) {
       print(e);
     }
-
+    results.sort((a, b) {
+    // Extract percentages from strings
+    int percentA = int.parse(a.split('Match percent: ')[1].split(' ')[0]);
+    int percentB = int.parse(b.split('Match percent: ')[1].split(' ')[0]);
+    // Compare percentages
+    return percentB.compareTo(percentA); // Sorting in descending order
+    });
     return results;
   }
 
@@ -225,13 +236,14 @@ class Script {
     int maxSimilarity = 0;
     try{
     for (String wordGroup in list) {
-      if (wordGroup[0]==searchTerm[0]||wordGroup[1]==searchTerm[1]||wordGroup[1]==searchTerm[0]||wordGroup[0]==searchTerm[1]) {//fast search
-          int distance = getLevenshteinDistance(wordGroup, searchTerm);
-          int maxLength = [wordGroup.length, searchTerm.length].reduce((a, b) => a > b ? a : b);
+      String wordGroupl = wordGroup.toLowerCase().replaceAll(',', '').replaceAll('.', '').replaceAll(':', '').replaceAll('', '');
+      if (wordGroupl[0]==searchTerm[0]||wordGroupl[1]==searchTerm[1]||wordGroupl[1]==searchTerm[0]||wordGroupl[0]==searchTerm[1]) {//fast search
+          int distance = getLevenshteinDistance(wordGroupl, searchTerm);
+          int maxLength = [wordGroupl.length, searchTerm.length].reduce((a, b) => a > b ? a : b);
           int similarity = (((maxLength - distance) / maxLength) * 100).toInt();
           if (similarity > maxSimilarity) {
             maxSimilarity = similarity;
-            maxMatch = wordGroup;
+            maxMatch = wordGroup.replaceAll(',', '').replaceAll('.', '').replaceAll(':', '').replaceAll('', '');
           }
       }
     }
