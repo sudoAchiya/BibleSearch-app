@@ -14,36 +14,50 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.green,
-          title: const Text(
-            'BibleSearch',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 20),
-            _SearchBar(), // Search bar widget
-            const SizedBox(height: 20), // Add space between search bar and selectors
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _PercentageDropdownButton(),
-                  const SizedBox(width: 20), // Custom dropdown button for percentage choice
-                  _LanguageDropdownButton(),
-                ],
-              ),
-            ),
-          ],
+  return MaterialApp(
+    home: Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.green,
+        title: const Text(
+          'BibleSearch',
+          style: TextStyle(color: Colors.white),
         ),
       ),
-    );
-  }
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 20),
+          _SearchBar(), // Search bar widget
+          const SizedBox(height: 20), // Add space between search bar and selectors
+          Center(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _PercentageDropdownButton(), // Custom dropdown button for percentage choice
+                    const SizedBox(width: 20), // Add space between selectors
+                    _LanguageDropdownButton(), 
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _BookStartDropdownButton(),
+                    const SizedBox(width: 20), // Add space between selectors
+                    _BookEndDropdownButton()
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 }
 
 class _SearchBar extends StatefulWidget {
@@ -72,8 +86,9 @@ class _SearchBarState extends State<_SearchBar> {
               String searchTerm = _searchController.text;
               String filePath = _getFilePath();
               int chosenPercent = PercentageDropdownController.of(context).percentageNotifier.value;
-              
-              List<String> results = await Script.search(searchTerm, chosenPercent, filePath,_LanguageDropdownButtonState()._selectedBookStart!,_LanguageDropdownButtonState()._selectedBookEnd!);
+              String start = PercentageDropdownController.of(context)._bookStartDropdownButtonState._selectedBookStart;
+              String end = PercentageDropdownController.of(context)._bookEndDropdownButtonState._selectedBookEnd;
+              List<String> results = await Script.search(searchTerm, chosenPercent, filePath,start,end);
               // Display results in the app
               showDialog(
                 // ignore: use_build_context_synchronously
@@ -129,13 +144,12 @@ class _SearchBarState extends State<_SearchBar> {
   }
 
   bool isHebrew(String text) {
-    // Check if the text contains Hebrew characters
     final RegExp regex = RegExp(r'[\u0590-\u05FF\s]+');
     return regex.hasMatch(text);
   }
 
   String _getFilePath() {
-    final languageDropdownState = _LanguageDropdownButtonState();
+    final languageDropdownState = PercentageDropdownController.of(context)._languageDropdownButtonState;
     final selectedLanguage = languageDropdownState.getSelectedLanguage();
     return selectedLanguage == 'English' ? 'assets/bible.txt' : 'assets/bibleH.txt';
   }
@@ -181,6 +195,9 @@ class PercentageDropdownController extends StatefulWidget {
 
 class _PercentageDropdownControllerState extends State<PercentageDropdownController> {
   late ValueNotifier<int> _selectedPercentageNotifier;
+  late _LanguageDropdownButtonState _languageDropdownButtonState;
+  late _BookStartDropdownButtonState _bookStartDropdownButtonState;
+  late _BookEndDropdownButtonState _bookEndDropdownButtonState;
 
   ValueNotifier<int> get percentageNotifier => _selectedPercentageNotifier;
 
@@ -200,6 +217,35 @@ class _PercentageDropdownControllerState extends State<PercentageDropdownControl
 
   void updateSelectedPercentage(int newPercentage) {
     _selectedPercentageNotifier.value = newPercentage;
+  }
+
+  void setLanguageDropdownButtonState(_LanguageDropdownButtonState state) {
+    _languageDropdownButtonState = state;
+    print("hola");
+    if(state._selectedLanguage == 'Hebrew')
+    {
+    }
+    else
+    {
+      _bookStartDropdownButtonState.books = Script.books;
+      // _bookStartDropdownButtonState._selectedBookStart = "Genesis";
+    }
+  }
+  void setBookStartDropdownButtonState(_BookStartDropdownButtonState state,String lang) {
+    if(lang == 'h')
+    {
+      _bookStartDropdownButtonState.books = Script.booksH;
+      // _bookStartDropdownButtonState._selectedBookStart = "בראשית";
+    }
+    else
+    {
+      _bookStartDropdownButtonState.books = Script.books;
+      // _bookStartDropdownButtonState._selectedBookStart = "Genesis";
+    }
+    _bookStartDropdownButtonState = state;
+  }
+  void setBookEndDropdownButtonState(_BookEndDropdownButtonState state) {
+    _bookEndDropdownButtonState = state;
   }
 
   @override
@@ -228,90 +274,126 @@ class _LanguageDropdownButton extends StatefulWidget {
 
 class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
   String _selectedLanguage = 'Hebrew'; // Default language
-  String _selectedBookHebrewStart = 'בראשית';
-  String _selectedBookHebrewEnd = 'התגלות'; // Selected book for Hebrew language
-  String _selectedBookEnglishStart = 'Genesis';
-  String _selectedBookEnglishEnd = 'Revelation'; // Selected book for English language
-  String? _selectedBookStart = 'בראשית';
-   String? _selectedBookEnd = "התגלות"; // Selected book for the current language
+
+  // Define lists of books for each language
+  late List<String> _books;
+  late String _selectedStartBook;
+  late String _selectedEndBook;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize lists of books
+    // Initialize selected start and end books
+    _selectedStartBook =  Script.booksH.first;
+    _selectedEndBook =  Script.booksH.last;
+  }
 
   String getSelectedLanguage() {
     return _selectedLanguage;
   }
 
-  List<String> getBooks() {
-    return _selectedLanguage == 'Hebrew' ? Script.booksH : Script.books;
+  @override
+  Widget build(BuildContext context) {
+    final percentageController = PercentageDropdownController.of(context);
+    percentageController.setLanguageDropdownButtonState(this);
+
+    return DropdownButton<String>(
+      value: _selectedLanguage,
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedLanguage = newValue!;
+          // Update lists of books based on the selected language
+          _books = _selectedLanguage == 'English' ? Script.books : Script.booksH;
+          // Update selected start and end books
+          _selectedStartBook = _books.first;
+          _selectedEndBook = _books.last;
+        });
+      },
+      items: <String>['English', 'Hebrew'] // Define your language options here
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+    );
+  }
+}
+
+
+
+
+class _BookStartDropdownButton extends StatefulWidget {
+  @override
+  _BookStartDropdownButtonState createState() => _BookStartDropdownButtonState();
+}
+
+class _BookStartDropdownButtonState extends State<_BookStartDropdownButton> {
+  List<String> books = Script.booksH;
+  String _selectedBookStart = Script.booksH.first;
+  String getSelectedBookStart() {
+    return _selectedBookStart;
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          DropdownButton<String>(
-            value: _selectedLanguage,
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedLanguage = newValue!;
-                // Reset selected book when language changes
-                if (newValue == "Hebrew") {
-                  _selectedBookStart = _selectedBookHebrewStart;
-                  _selectedBookEnd = _selectedBookHebrewEnd;
-                } else {
-                  _selectedBookStart = _selectedBookEnglishStart;
-                  _selectedBookEnd = _selectedBookEnglishEnd;
-                }
-              });
-            },
-            items: <String>['Hebrew', 'English']
-                .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-          DropdownButton<String>(
-            value: _selectedBookStart,
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedBookStart = newValue!;
-                if (_selectedLanguage == 'Hebrew') {
-                  _selectedBookHebrewStart = newValue;
-                } else {
-                  _selectedBookEnglishStart = newValue;
-                }
-              });
-            },
-            items: getBooks()
-                .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                })
-                .toList(),
-          ),
-          const SizedBox(height: 20),
-          DropdownButton<String>(
-            value: _selectedBookEnd,
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedBookEnd = newValue!;
-              });
-            },
-            items: getBooks()
-                .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                })
-                .toList(),
-          ),
-        ],
-      ),
+    final percentageController = PercentageDropdownController.of(context);
+    if(percentageController._languageDropdownButtonState._selectedLanguage=="Hebrew") {
+      percentageController.setBookStartDropdownButtonState(this,"h");
+    }
+    else
+    {
+      percentageController.setBookStartDropdownButtonState(this,"e");
+    }
+    return DropdownButton<String>(
+      value: _selectedBookStart,
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedBookStart = newValue!;
+        });
+      },
+      items: books.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+    );
+  }
+}
+class _BookEndDropdownButton extends StatefulWidget {
+  @override
+  _BookEndDropdownButtonState createState() => _BookEndDropdownButtonState();
+}
+
+class _BookEndDropdownButtonState extends State<_BookEndDropdownButton> {
+  String _selectedBookEnd = 'התגלות'; // Default language
+
+  String getSelectedBookEnd() {
+    return _selectedBookEnd;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final percentageController = PercentageDropdownController.of(context);
+    percentageController.setBookEndDropdownButtonState(this);
+
+    return DropdownButton<String>(
+      value: _selectedBookEnd,
+      onChanged: (String? newValue) {
+        setState(() {
+          print("hola"+  _selectedBookEnd);
+          _selectedBookEnd = newValue!;
+          print("holas"+  _selectedBookEnd);
+        });
+      },
+      items: Script.booksH.reversed.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
     );
   }
 }

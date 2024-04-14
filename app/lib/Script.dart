@@ -59,13 +59,16 @@ class Script {
   static List<String> ChoosenBooks(String start, String end, List<String> inputList) {
   List<String> result = [];
   bool startFound = false;
+  bool good = false;
 
   for (String item in inputList) {
     if (startFound) {
       if (item == end) {
         // End string found, add it to the result and break the loop
         result.add(item);
+        good = true;
         break;
+        
       } else {
         result.add(item);
       }
@@ -77,12 +80,14 @@ class Script {
       }
     }
   }
+  if(good==false) {
+    return [];
+  }
   return result;
 }
   static Future<List<String>> search(String searchTerm, int chosenPercent, String filePath, String startBook, String endBook) async {
     List<String> results;
     DateTime startTime = DateTime.now();
-    print(filePath);
     if (filePath == "assets/bible.txt") {
       results = await searchInBible(searchTerm, countWords(searchTerm), chosenPercent, ChoosenBooks(startBook,endBook,books), filePath);
     } else {
@@ -94,20 +99,6 @@ class Script {
     print('Elapsed time: ${elapsedTime.inMilliseconds} miliseconds');
     return results;
   }
-  // static Future<List<String>> search(String searchTerm, int chosenPercent, String filePath) async {
-  //   List<String> results;
-  //   DateTime startTime = DateTime.now();
-  //   if (filePath == "assets/bible.txt") {
-  //     results = await searchInBible(searchTerm, countWords(searchTerm), chosenPercent, books, filePath);
-  //   } else {
-  //     results = await searchInBibleH(searchTerm, countWords(searchTerm), chosenPercent, booksH, filePath);
-  //   }
-  //   DateTime endTime = DateTime.now();
-  //   Duration elapsedTime = endTime.difference(startTime);
-  
-  //   print('Elapsed time: ${elapsedTime.inMilliseconds} miliseconds');
-  //   return results;
-  // }
 
   static Future<List<String>> searchInBibleH(String searchTerm, int numWords,int chosenPercent, List<String> chosenBooks, String filePath) async {
     List<String> results = [];
