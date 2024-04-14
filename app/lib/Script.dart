@@ -55,14 +55,38 @@ class Script {
     // Return the number of resulting substrings (words)
     return words.length;
   }
+  // ignore: non_constant_identifier_names
+  static List<String> ChoosenBooks(String start, String end, List<String> inputList) {
+  List<String> result = [];
+  bool startFound = false;
 
-  static Future<List<String>> search(String searchTerm, int chosenPercent, String filePath) async {
+  for (String item in inputList) {
+    if (startFound) {
+      if (item == end) {
+        // End string found, add it to the result and break the loop
+        result.add(item);
+        break;
+      } else {
+        result.add(item);
+      }
+    } else {
+      if (item == start) {
+        // Start string found, start adding to the result list
+        result.add(item);
+        startFound = true;
+      }
+    }
+  }
+  return result;
+}
+  static Future<List<String>> search(String searchTerm, int chosenPercent, String filePath, String startBook, String endBook) async {
     List<String> results;
     DateTime startTime = DateTime.now();
+    print(filePath);
     if (filePath == "assets/bible.txt") {
-      results = await searchInBible(searchTerm, countWords(searchTerm), chosenPercent, books, filePath);
+      results = await searchInBible(searchTerm, countWords(searchTerm), chosenPercent, ChoosenBooks(startBook,endBook,books), filePath);
     } else {
-      results = await searchInBibleH(searchTerm, countWords(searchTerm), chosenPercent, booksH, filePath);
+      results = await searchInBibleH(searchTerm, countWords(searchTerm), chosenPercent, ChoosenBooks(startBook,endBook,booksH), filePath);
     }
     DateTime endTime = DateTime.now();
     Duration elapsedTime = endTime.difference(startTime);
@@ -70,9 +94,22 @@ class Script {
     print('Elapsed time: ${elapsedTime.inMilliseconds} miliseconds');
     return results;
   }
+  // static Future<List<String>> search(String searchTerm, int chosenPercent, String filePath) async {
+  //   List<String> results;
+  //   DateTime startTime = DateTime.now();
+  //   if (filePath == "assets/bible.txt") {
+  //     results = await searchInBible(searchTerm, countWords(searchTerm), chosenPercent, books, filePath);
+  //   } else {
+  //     results = await searchInBibleH(searchTerm, countWords(searchTerm), chosenPercent, booksH, filePath);
+  //   }
+  //   DateTime endTime = DateTime.now();
+  //   Duration elapsedTime = endTime.difference(startTime);
+  
+  //   print('Elapsed time: ${elapsedTime.inMilliseconds} miliseconds');
+  //   return results;
+  // }
 
-  static Future<List<String>> searchInBibleH(String searchTerm, int numWords,
-    int chosenPercent, List<String> chosenBooks, String filePath) async {
+  static Future<List<String>> searchInBibleH(String searchTerm, int numWords,int chosenPercent, List<String> chosenBooks, String filePath) async {
     List<String> results = [];
     int maxPercent = 0;
     bool flag = false;
@@ -114,16 +151,6 @@ class Script {
     });
     return results;
   }
-  static String highlightMatch(String text, String searchTerm) {
-    int startIndex = text.indexOf(searchTerm);
-    if (startIndex == -1) return text;
-
-    String highlightedText = "${text.substring(0, startIndex)} ";
-    highlightedText += '\u001b[34m$searchTerm\u001b[0m'+" "; // ANSI escape code for blue color
-    highlightedText += text.substring(startIndex + searchTerm.length);
-    print(highlightedText);
-    return highlightedText;
-  }
   static Future<List<String>> searchInBible(String searchTerm, int numWords,int chosenPercent, List<String> chosenBooks, String filePath) async {
     List<String> results = [];
     int maxPercent = 0;
@@ -148,8 +175,7 @@ class Script {
             String currentVerse = verseText.split(RegExp(r'\s+'))[0].split(":")[1];
             String currentChapter = verseText.split(RegExp(r'\s+'))[0].split(":")[0];
             String verse = verseText.split(RegExp(r'\s+')).sublist(1).join(" ");
-            String highlightedVerse = highlightMatch(verse, searchTerm);
-            results.add("Book: $currentBook Chapter: $currentChapter Verse: $currentVerse\n $highlightedVerse\n Match percent: $percent\n Matching part: ${match[0]}\n-----------------------------------");
+            results.add("Book: $currentBook Chapter: $currentChapter Verse: $currentVerse\n $verse\n Match percent: $percent\n Matching part: ${match[0]}\n-----------------------------------");
           }
         }
       });

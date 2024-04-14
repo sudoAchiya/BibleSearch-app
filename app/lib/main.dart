@@ -33,9 +33,9 @@ class MyApp extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _PercentageDropdownButton(), // Custom dropdown button for percentage choice
-                  const SizedBox(width: 20), // Add space between selectors
-                  _LanguageDropdownButton(), // Language selector dropdown button
+                  _PercentageDropdownButton(),
+                  const SizedBox(width: 20), // Custom dropdown button for percentage choice
+                  _LanguageDropdownButton(),
                 ],
               ),
             ),
@@ -72,7 +72,8 @@ class _SearchBarState extends State<_SearchBar> {
               String searchTerm = _searchController.text;
               String filePath = _getFilePath();
               int chosenPercent = PercentageDropdownController.of(context).percentageNotifier.value;
-              List<String> results = await Script.search(searchTerm, chosenPercent, filePath);
+              
+              List<String> results = await Script.search(searchTerm, chosenPercent, filePath,_LanguageDropdownButtonState()._selectedBookStart!,_LanguageDropdownButtonState()._selectedBookEnd!);
               // Display results in the app
               showDialog(
                 // ignore: use_build_context_synchronously
@@ -134,7 +135,7 @@ class _SearchBarState extends State<_SearchBar> {
   }
 
   String _getFilePath() {
-    final languageDropdownState = PercentageDropdownController.of(context)._languageDropdownButtonState;
+    final languageDropdownState = _LanguageDropdownButtonState();
     final selectedLanguage = languageDropdownState.getSelectedLanguage();
     return selectedLanguage == 'English' ? 'assets/bible.txt' : 'assets/bibleH.txt';
   }
@@ -180,7 +181,6 @@ class PercentageDropdownController extends StatefulWidget {
 
 class _PercentageDropdownControllerState extends State<PercentageDropdownController> {
   late ValueNotifier<int> _selectedPercentageNotifier;
-  late _LanguageDropdownButtonState _languageDropdownButtonState;
 
   ValueNotifier<int> get percentageNotifier => _selectedPercentageNotifier;
 
@@ -200,10 +200,6 @@ class _PercentageDropdownControllerState extends State<PercentageDropdownControl
 
   void updateSelectedPercentage(int newPercentage) {
     _selectedPercentageNotifier.value = newPercentage;
-  }
-
-  void setLanguageDropdownButtonState(_LanguageDropdownButtonState state) {
-    _languageDropdownButtonState = state;
   }
 
   @override
@@ -231,31 +227,91 @@ class _LanguageDropdownButton extends StatefulWidget {
 }
 
 class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
-  String _selectedLanguage = 'English'; // Default language
+  String _selectedLanguage = 'Hebrew'; // Default language
+  String _selectedBookHebrewStart = 'בראשית';
+  String _selectedBookHebrewEnd = 'התגלות'; // Selected book for Hebrew language
+  String _selectedBookEnglishStart = 'Genesis';
+  String _selectedBookEnglishEnd = 'Revelation'; // Selected book for English language
+  String? _selectedBookStart = 'בראשית';
+   String? _selectedBookEnd = "התגלות"; // Selected book for the current language
 
   String getSelectedLanguage() {
     return _selectedLanguage;
   }
 
+  List<String> getBooks() {
+    return _selectedLanguage == 'Hebrew' ? Script.booksH : Script.books;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final percentageController = PercentageDropdownController.of(context);
-    percentageController.setLanguageDropdownButtonState(this);
-
-    return DropdownButton<String>(
-      value: _selectedLanguage,
-      onChanged: (String? newValue) {
-        setState(() {
-          _selectedLanguage = newValue!;
-        });
-      },
-      items: <String>['English', 'Hebrew'] // Define your language options here
-          .map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          DropdownButton<String>(
+            value: _selectedLanguage,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedLanguage = newValue!;
+                // Reset selected book when language changes
+                if (newValue == "Hebrew") {
+                  _selectedBookStart = _selectedBookHebrewStart;
+                  _selectedBookEnd = _selectedBookHebrewEnd;
+                } else {
+                  _selectedBookStart = _selectedBookEnglishStart;
+                  _selectedBookEnd = _selectedBookEnglishEnd;
+                }
+              });
+            },
+            items: <String>['Hebrew', 'English']
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+          DropdownButton<String>(
+            value: _selectedBookStart,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedBookStart = newValue!;
+                if (_selectedLanguage == 'Hebrew') {
+                  _selectedBookHebrewStart = newValue;
+                } else {
+                  _selectedBookEnglishStart = newValue;
+                }
+              });
+            },
+            items: getBooks()
+                .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                })
+                .toList(),
+          ),
+          const SizedBox(height: 20),
+          DropdownButton<String>(
+            value: _selectedBookEnd,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedBookEnd = newValue!;
+              });
+            },
+            items: getBooks()
+                .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                })
+                .toList(),
+          ),
+        ],
+      ),
     );
   }
 }
