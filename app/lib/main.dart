@@ -14,51 +14,75 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  return MaterialApp(
-    home: Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.green,
-        title: const Text(
-          'BibleSearch',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 20),
-          _SearchBar(), // Search bar widget
-          const SizedBox(height: 20), // Add space between search bar and selectors
-          Center(
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _PercentageDropdownButton(), // Custom dropdown button for percentage choice
-                    const SizedBox(width: 20), // Add space between selectors
-                    _LanguageDropdownButton(), 
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _BookStartDropdownButton(),
-                    const SizedBox(width: 20), // Add space between selectors
-                    _BookEndDropdownButton()
-                  ],
-                ),
-              ],
+    return MaterialApp(
+      home: SafeArea(
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          appBar: AppBar(
+            backgroundColor: Colors.blue,
+            title: const Text(
+              'BibleSearch',
+              style: TextStyle(color: Colors.white),
             ),
           ),
-        ],
+          body: Stack(
+            children: [
+              ListView(
+                children: [
+                  const SizedBox(height: 20),
+                  _SearchBar(), // Search bar widget
+                  const SizedBox(height: 20), // Add space between search bar and selectors
+                  Center(
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _PercentageDropdownButton(), // Custom dropdown button for percentage choice
+                            const SizedBox(width: 20), // Add space between selectors
+                            _LanguageDropdownButton(), 
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Column(
+                          children: [
+                            _BookStartDropdownButton(), // Dropdown button for start book
+                            const SizedBox(height: 20), // Add space between rows
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            _BookEndDropdownButton(), // Dropdown button for end book
+                            const SizedBox(height: 20), // Add space between rows
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 120,
+                
+                child: Image.asset(
+                  'assets/book.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
-}
+
+
+
+
 
 class _SearchBar extends StatefulWidget {
   @override
@@ -151,7 +175,7 @@ class _SearchBarState extends State<_SearchBar> {
   String _getFilePath() {
     final languageDropdownState = PercentageDropdownController.of(context)._languageDropdownButtonState;
     final selectedLanguage = languageDropdownState.getSelectedLanguage();
-    return selectedLanguage == 'English' ? 'assets/bible.txt' : 'assets/bibleH.txt';
+    return selectedLanguage == 'אנגלית' ? 'assets/bible.txt' : 'assets/bibleH.txt';
   }
 }
 
@@ -254,7 +278,7 @@ class _LanguageDropdownButton extends StatefulWidget {
 }
 
 class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
-  String _selectedLanguage = 'Hebrew'; // Default language
+  String _selectedLanguage = 'עברית'; // Default language
 
   // Define lists of books for each language
   
@@ -283,7 +307,7 @@ class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
           _selectedLanguage = newValue!;
         });
       },
-      items: <String>['English', 'Hebrew'] // Define your language options here
+      items: <String>['עברית','אנגלית'] // Define your language options here
           .map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,
