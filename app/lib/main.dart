@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'Script.dart';
 
@@ -10,7 +12,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -107,47 +109,7 @@ class _SearchBarState extends State<_SearchBar> {
           hintText: _isHebrew ? 'הזן מונח חיפוש...' : 'Enter search term...',
           suffixIcon: IconButton(
             onPressed: () async {
-              String searchTerm = _searchController.text;
-              String filePath = _getFilePath();
-              int chosenPercent = PercentageDropdownController.of(context).percentageNotifier.value;
-              String start = PercentageDropdownController.of(context)._bookStartDropdownButtonState._selectedBookStart;
-              String end = PercentageDropdownController.of(context)._bookEndDropdownButtonState._selectedBookEnd;
-              List<String> results = await Script.search(searchTerm, chosenPercent, filePath,start,end);
-              // Display results in the app
-              showDialog(
-                // ignore: use_build_context_synchronously
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text(
-                      _isHebrew ? 'תוצאות חיפוש' : 'Search Results',
-                      textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
-                    ),
-                    content: SizedBox(
-                      width: double.maxFinite,
-                      child: ListView.builder(
-                        itemCount: results.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return ListTile(
-                            title: Text(
-                              results[index],
-                              textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('סגור'), // Close
-                      ),
-                    ],
-                  );
-                },
-              );
+              _search();
             },
             icon: const Icon(Icons.search),
           ),
@@ -157,7 +119,54 @@ class _SearchBarState extends State<_SearchBar> {
             _isHebrew = isHebrew(text);
           });
         },
+        onSubmitted: (text) {
+          _search();
+        },
       ),
+    );
+  }
+
+  void _search() async {
+    String searchTerm = _searchController.text;
+    String filePath = _getFilePath();
+    int chosenPercent = PercentageDropdownController.of(context).percentageNotifier.value;
+    String start = PercentageDropdownController.of(context)._bookStartDropdownButtonState._selectedBookStart;
+    String end = PercentageDropdownController.of(context)._bookEndDropdownButtonState._selectedBookEnd;
+    List<String> results = await Script.search(searchTerm, chosenPercent, filePath,start,end);
+    // Display results in the app
+    showDialog(
+      // ignore: use_build_context_synchronously
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            _isHebrew ? 'תוצאות חיפוש' : 'Search Results',
+            textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              itemCount: results.length,
+              itemBuilder: (BuildContext context, int index) {
+                return ListTile(
+                  title: Text(
+                    results[index],
+                    textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('סגור'), // Close
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -178,6 +187,7 @@ class _SearchBarState extends State<_SearchBar> {
     return selectedLanguage == 'אנגלית' ? 'assets/bible.txt' : 'assets/bibleH.txt';
   }
 }
+
 
 class _PercentageDropdownButton extends StatelessWidget {
   @override
@@ -207,7 +217,7 @@ class _PercentageDropdownButton extends StatelessWidget {
 class PercentageDropdownController extends StatefulWidget {
   final Widget child;
 
-  const PercentageDropdownController({Key? key, required this.child}) : super(key: key);
+  const PercentageDropdownController({super.key, required this.child});
 
   static _PercentageDropdownControllerState of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<_PercentageDropdownController>()!.controller;
@@ -263,8 +273,7 @@ class _PercentageDropdownControllerState extends State<PercentageDropdownControl
 class _PercentageDropdownController extends InheritedWidget {
   final _PercentageDropdownControllerState controller;
 
-  const _PercentageDropdownController({Key? key, required this.controller, required Widget child})
-      : super(key: key, child: child);
+  const _PercentageDropdownController({required this.controller, required super.child});
 
   @override
   bool updateShouldNotify(_PercentageDropdownController oldWidget) {

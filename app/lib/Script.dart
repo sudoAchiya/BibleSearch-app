@@ -110,7 +110,11 @@ static final Map<String, int> bookIndexMapE = {
   List<String> result = [];
   bool startFound = false;
   bool good = false;
-
+  if(start==end)
+  {
+    result.add(start);
+    return result;
+  }
   for (String item in inputList) {
     if (startFound) {
       if (item == end) {
@@ -137,13 +141,15 @@ static final Map<String, int> bookIndexMapE = {
 }
   static Future<List<String>> search(String searchTerm, int chosenPercent, String filePath, String startBook, String endBook) async {
     List<String> results;
+    
     DateTime startTime = DateTime.now();
     if (filePath == "assets/bible.txt") {
       startBook = bookDictionary[startBook]!;
       endBook = bookDictionary[endBook]!;
       results = await searchInBible(searchTerm, countWords(searchTerm), chosenPercent, ChoosenBooks(startBook,endBook,books), filePath);
     } else {
-      results = await searchInBibleH(searchTerm, countWords(searchTerm), chosenPercent, ChoosenBooks(startBook,endBook,booksH), filePath);
+      List<String> choosenBooks = ChoosenBooks(startBook,endBook,booksH);
+      results = await searchInBibleH(searchTerm, countWords(searchTerm), chosenPercent,choosenBooks, filePath);
     }
     DateTime endTime = DateTime.now();
     Duration elapsedTime = endTime.difference(startTime);
@@ -232,39 +238,18 @@ static final Map<String, int> bookIndexMapE = {
     results.sort((a, b) {
     // Parse matched percent from string 'a'
 int matchPercentA = int.parse(a.split('Match percent: ')[1].split(' ')[0]);
-
-// Parse book name from string 'a'
 String bookNameA = a.split('Book: ')[1].split("Chapter: ")[0].substring(0, a.split('Book: ')[1].split("Chapter: ")[0].length - 1);
-
-// Get the index of the book from the map and multiply it by 10,000
 int bookIndexA = bookIndexMapE[bookNameA]! * 10000;
-
-// Parse chapter number from string 'b'
 int chapterNumberA = int.parse(a.split('Chapter: ')[1].split(' ')[0]);
-
-// Parse verse number from string 'b'
 int verseNumberA = int.parse(a.split('Verse: ')[1].split(' ')[0]);
-
-// Combine all parts into 'placementA'
 int placementA = matchPercentA * 1000000 + bookIndexA + chapterNumberA * -100 + verseNumberA * -1;
-// Parse matched percent from string 'b'
+
 int matchPercentB = int.parse(b.split('Match percent: ')[1].split(' ')[0]);
-
-// Parse book name from string 'b'
 String bookNameB = b.split('Book: ')[1].split("Chapter: ")[0].substring(0, b.split('Book: ')[1].split("Chapter: ")[0].length - 1);
-
-// Get the index of the book from the map and multiply it by 10,000
 int bookIndexB = bookIndexMapE[bookNameB]! * 10000;
-
-// Parse chapter number from string 'b'
 int chapterNumberB = int.parse(b.split('Chapter: ')[1].split(' ')[0]);
-
-// Parse verse number from string 'b'
 int verseNumberB = int.parse(b.split('Verse: ')[1].split(' ')[0]);
-
-// Combine all parts into 'placementB'
 int placementB = matchPercentB * 1000000 + bookIndexB + chapterNumberB * -100 + verseNumberB * -1;
-
       return placementB.compareTo(placementA);
     });
     return results;
