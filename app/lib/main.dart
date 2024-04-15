@@ -221,27 +221,8 @@ class _PercentageDropdownControllerState extends State<PercentageDropdownControl
 
   void setLanguageDropdownButtonState(_LanguageDropdownButtonState state) {
     _languageDropdownButtonState = state;
-    print("hola");
-    if(state._selectedLanguage == 'Hebrew')
-    {
-    }
-    else
-    {
-      _bookStartDropdownButtonState.books = Script.books;
-      // _bookStartDropdownButtonState._selectedBookStart = "Genesis";
-    }
   }
-  void setBookStartDropdownButtonState(_BookStartDropdownButtonState state,String lang) {
-    if(lang == 'h')
-    {
-      _bookStartDropdownButtonState.books = Script.booksH;
-      // _bookStartDropdownButtonState._selectedBookStart = "בראשית";
-    }
-    else
-    {
-      _bookStartDropdownButtonState.books = Script.books;
-      // _bookStartDropdownButtonState._selectedBookStart = "Genesis";
-    }
+  void setBookStartDropdownButtonState(_BookStartDropdownButtonState state) {
     _bookStartDropdownButtonState = state;
   }
   void setBookEndDropdownButtonState(_BookEndDropdownButtonState state) {
@@ -276,17 +257,14 @@ class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
   String _selectedLanguage = 'Hebrew'; // Default language
 
   // Define lists of books for each language
-  late List<String> _books;
-  late String _selectedStartBook;
-  late String _selectedEndBook;
+  
 
   @override
   void initState() {
     super.initState();
     // Initialize lists of books
     // Initialize selected start and end books
-    _selectedStartBook =  Script.booksH.first;
-    _selectedEndBook =  Script.booksH.last;
+    
   }
 
   String getSelectedLanguage() {
@@ -303,11 +281,6 @@ class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
       onChanged: (String? newValue) {
         setState(() {
           _selectedLanguage = newValue!;
-          // Update lists of books based on the selected language
-          _books = _selectedLanguage == 'English' ? Script.books : Script.booksH;
-          // Update selected start and end books
-          _selectedStartBook = _books.first;
-          _selectedEndBook = _books.last;
         });
       },
       items: <String>['English', 'Hebrew'] // Define your language options here
@@ -330,8 +303,8 @@ class _BookStartDropdownButton extends StatefulWidget {
 }
 
 class _BookStartDropdownButtonState extends State<_BookStartDropdownButton> {
-  List<String> books = Script.booksH;
-  String _selectedBookStart = Script.booksH.first;
+  String _selectedBookStart = 'בראשית'; // Default language
+
   String getSelectedBookStart() {
     return _selectedBookStart;
   }
@@ -339,13 +312,8 @@ class _BookStartDropdownButtonState extends State<_BookStartDropdownButton> {
   @override
   Widget build(BuildContext context) {
     final percentageController = PercentageDropdownController.of(context);
-    if(percentageController._languageDropdownButtonState._selectedLanguage=="Hebrew") {
-      percentageController.setBookStartDropdownButtonState(this,"h");
-    }
-    else
-    {
-      percentageController.setBookStartDropdownButtonState(this,"e");
-    }
+    percentageController.setBookStartDropdownButtonState(this);
+
     return DropdownButton<String>(
       value: _selectedBookStart,
       onChanged: (String? newValue) {
@@ -353,7 +321,7 @@ class _BookStartDropdownButtonState extends State<_BookStartDropdownButton> {
           _selectedBookStart = newValue!;
         });
       },
-      items: books.map<DropdownMenuItem<String>>((String value) {
+      items: Script.booksH.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),
@@ -383,9 +351,7 @@ class _BookEndDropdownButtonState extends State<_BookEndDropdownButton> {
       value: _selectedBookEnd,
       onChanged: (String? newValue) {
         setState(() {
-          print("hola"+  _selectedBookEnd);
           _selectedBookEnd = newValue!;
-          print("holas"+  _selectedBookEnd);
         });
       },
       items: Script.booksH.reversed.map<DropdownMenuItem<String>>((String value) {
