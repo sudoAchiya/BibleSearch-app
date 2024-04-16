@@ -242,14 +242,14 @@ String bookNameA = a.split('Book: ')[1].split("Chapter: ")[0].substring(0, a.spl
 int bookIndexA = bookIndexMapE[bookNameA]! * 10000;
 int chapterNumberA = int.parse(a.split('Chapter: ')[1].split(' ')[0]);
 int verseNumberA = int.parse(a.split('Verse: ')[1].split(' ')[0]);
-int placementA = matchPercentA * 1000000 + bookIndexA + chapterNumberA * -100 + verseNumberA * -1;
+int placementA = matchPercentA * 1000000 + bookIndexA*10000 + chapterNumberA * -100 + verseNumberA * -1;
 
 int matchPercentB = int.parse(b.split('Match percent: ')[1].split(' ')[0]);
 String bookNameB = b.split('Book: ')[1].split("Chapter: ")[0].substring(0, b.split('Book: ')[1].split("Chapter: ")[0].length - 1);
 int bookIndexB = bookIndexMapE[bookNameB]! * 10000;
 int chapterNumberB = int.parse(b.split('Chapter: ')[1].split(' ')[0]);
 int verseNumberB = int.parse(b.split('Verse: ')[1].split(' ')[0]);
-int placementB = matchPercentB * 1000000 + bookIndexB + chapterNumberB * -100 + verseNumberB * -1;
+int placementB = matchPercentB * 1000000 + bookIndexB*10000 + chapterNumberB * -100 + verseNumberB * -1;
       return placementB.compareTo(placementA);
     });
     return results;

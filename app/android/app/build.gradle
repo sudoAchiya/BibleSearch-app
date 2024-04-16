@@ -41,7 +41,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.jhgvc.app"
+        applicationId "com.BibleSearch.app"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
