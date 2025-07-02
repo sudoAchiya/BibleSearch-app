@@ -1,13 +1,12 @@
 name: app
 description: "A new Flutter project."
 
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+4
 
 environment:
-  sdk: '>=3.3.1 <4.0.0'
+  sdk: ">=3.3.1 <4.0.0"
 
 dependencies:
   flutter:
@@ -26,6 +25,6 @@ flutter:
     - assets/bibleHN.txt
     - assets/bibleH.txt
     - assets/bible.txt
-    - assets/icons/ 
+    - assets/icons/
     - assets/book.png
   uses-material-design: true

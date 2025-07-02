@@ -31,30 +31,41 @@ class MyApp extends StatelessWidget {
               ListView(
                 children: [
                   const SizedBox(height: 20),
-                  _SearchBar(), // Search bar widget
-                  const SizedBox(height: 20), // Add space between search bar and selectors
+                  _SearchBar(),
+                  const SizedBox(height: 20),
                   Center(
                     child: Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _PercentageDropdownButton(), // Custom dropdown button for percentage choice
-                            const SizedBox(width: 20), // Add space between selectors
-                            _LanguageDropdownButton(), 
-                          ],
+                        ValueListenableBuilder<String>(
+                          valueListenable:
+                              PercentageDropdownController.of(context)
+                                  .selectedLanguageNotifier,
+                          builder: (context, selectedLanguage, _) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _PercentageDropdownButton(),
+                                if (selectedLanguage == 'עברית') ...[
+                                  const SizedBox(width: 20),
+                                  _VersionDropdownButton(),
+                                ],
+                                const SizedBox(width: 20),
+                                _LanguageDropdownButton(),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 20),
                         Column(
                           children: [
-                            _BookStartDropdownButton(), // Dropdown button for start book
-                            const SizedBox(height: 20), // Add space between rows
+                            _BookStartDropdownButton(),
+                            const SizedBox(height: 20),
                           ],
                         ),
                         Column(
                           children: [
-                            _BookEndDropdownButton(), // Dropdown button for end book
-                            const SizedBox(height: 20), // Add space between rows
+                            _BookEndDropdownButton(),
+                            const SizedBox(height: 20),
                           ],
                         ),
                       ],
@@ -66,7 +77,6 @@ class MyApp extends StatelessWidget {
                 left: 0,
                 right: 0,
                 bottom: 120,
-                
                 child: Image.asset(
                   'assets/book.png',
                   fit: BoxFit.cover,
@@ -80,11 +90,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
-
-
-
-
 class _SearchBar extends StatefulWidget {
   @override
   _SearchBarState createState() => _SearchBarState();
@@ -92,7 +97,6 @@ class _SearchBar extends StatefulWidget {
 
 class _SearchBarState extends State<_SearchBar> {
   final TextEditingController _searchController = TextEditingController();
-
   bool _isHebrew = true;
 
   @override
@@ -128,11 +132,17 @@ class _SearchBarState extends State<_SearchBar> {
   void _search() async {
     String searchTerm = _searchController.text;
     String filePath = _getFilePath();
-    int chosenPercent = PercentageDropdownController.of(context).percentageNotifier.value;
-    String start = PercentageDropdownController.of(context)._bookStartDropdownButtonState._selectedBookStart;
-    String end = PercentageDropdownController.of(context)._bookEndDropdownButtonState._selectedBookEnd;
-    List<String> results = await Script.search(searchTerm, chosenPercent, filePath,start,end);
-    // Display results in the app
+    int chosenPercent =
+        PercentageDropdownController.of(context).percentageNotifier.value;
+    String start = PercentageDropdownController.of(context)
+        ._bookStartDropdownButtonState
+        ._selectedBookStart;
+    String end = PercentageDropdownController.of(context)
+        ._bookEndDropdownButtonState
+        ._selectedBookEnd;
+    List<String> results =
+        await Script.search(searchTerm, chosenPercent, filePath, start, end);
+
     showDialog(
       // ignore: use_build_context_synchronously
       context: context,
@@ -150,7 +160,8 @@ class _SearchBarState extends State<_SearchBar> {
                 return ListTile(
                   title: Text(
                     results[index],
-                    textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        _isHebrew ? TextDirection.rtl : TextDirection.ltr,
                   ),
                 );
               },
@@ -161,7 +172,7 @@ class _SearchBarState extends State<_SearchBar> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('סגור'), // Close
+              child: const Text('סגור'),
             ),
           ],
         );
@@ -181,12 +192,16 @@ class _SearchBarState extends State<_SearchBar> {
   }
 
   String _getFilePath() {
-    final languageDropdownState = PercentageDropdownController.of(context)._languageDropdownButtonState;
-    final selectedLanguage = languageDropdownState.getSelectedLanguage();
-    return selectedLanguage == 'אנגלית' ? 'assets/bible.txt' : 'assets/bibleH.txt';
+    final controller = PercentageDropdownController.of(context);
+    final selectedLanguage =
+        controller._languageDropdownButtonState.getSelectedLanguage();
+
+    if (selectedLanguage == 'אנגלית') return 'assets/bible.txt';
+
+    final version = controller._versionDropdownButtonState.getSelectedVersion();
+    return version == 'דליטש' ? 'assets/bibleH.txt' : 'assets/bibleHN.txt';
   }
 }
-
 
 class _PercentageDropdownButton extends StatelessWidget {
   @override
@@ -200,8 +215,7 @@ class _PercentageDropdownButton extends StatelessWidget {
           onChanged: (int? newValue) {
             percentageController.updateSelectedPercentage(newValue!);
           },
-          items: <int>[60, 75, 85, 90, 100] // Define your percentage options here
-              .map<DropdownMenuItem<int>>((int value) {
+          items: <int>[60, 75, 85, 90, 100].map((int value) {
             return DropdownMenuItem<int>(
               value: value,
               child: Text('$value%'),
@@ -215,24 +229,30 @@ class _PercentageDropdownButton extends StatelessWidget {
 
 class PercentageDropdownController extends StatefulWidget {
   final Widget child;
-
   const PercentageDropdownController({super.key, required this.child});
 
   static _PercentageDropdownControllerState of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<_PercentageDropdownController>()!.controller;
+    return context
+        .dependOnInheritedWidgetOfExactType<_PercentageDropdownController>()!
+        .controller;
   }
 
   @override
-  _PercentageDropdownControllerState createState() => _PercentageDropdownControllerState();
+  _PercentageDropdownControllerState createState() =>
+      _PercentageDropdownControllerState();
 }
 
-class _PercentageDropdownControllerState extends State<PercentageDropdownController> {
+class _PercentageDropdownControllerState
+    extends State<PercentageDropdownController> {
   late ValueNotifier<int> _selectedPercentageNotifier;
   late _LanguageDropdownButtonState _languageDropdownButtonState;
   late _BookStartDropdownButtonState _bookStartDropdownButtonState;
   late _BookEndDropdownButtonState _bookEndDropdownButtonState;
+  late _VersionDropdownButtonState _versionDropdownButtonState;
 
   ValueNotifier<int> get percentageNotifier => _selectedPercentageNotifier;
+  final ValueNotifier<String> selectedLanguageNotifier =
+      ValueNotifier<String>('עברית');
 
   @override
   void initState() {
@@ -255,11 +275,17 @@ class _PercentageDropdownControllerState extends State<PercentageDropdownControl
   void setLanguageDropdownButtonState(_LanguageDropdownButtonState state) {
     _languageDropdownButtonState = state;
   }
+
   void setBookStartDropdownButtonState(_BookStartDropdownButtonState state) {
     _bookStartDropdownButtonState = state;
   }
+
   void setBookEndDropdownButtonState(_BookEndDropdownButtonState state) {
     _bookEndDropdownButtonState = state;
+  }
+
+  void setVersionDropdownButtonState(_VersionDropdownButtonState state) {
+    _versionDropdownButtonState = state;
   }
 
   @override
@@ -271,9 +297,8 @@ class _PercentageDropdownControllerState extends State<PercentageDropdownControl
 
 class _PercentageDropdownController extends InheritedWidget {
   final _PercentageDropdownControllerState controller;
-
-  const _PercentageDropdownController({required this.controller, required super.child});
-
+  const _PercentageDropdownController(
+      {required this.controller, required super.child});
   @override
   bool updateShouldNotify(_PercentageDropdownController oldWidget) {
     return oldWidget.controller != controller;
@@ -286,27 +311,19 @@ class _LanguageDropdownButton extends StatefulWidget {
 }
 
 class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
-  String _selectedLanguage = 'עברית'; // Default language
-
-  // Define lists of books for each language
-  
+  String _selectedLanguage = 'עברית';
 
   @override
-  void initState() {
-    super.initState();
-    // Initialize lists of books
-    // Initialize selected start and end books
-    
-  }
-
-  String getSelectedLanguage() {
-    return _selectedLanguage;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final controller = PercentageDropdownController.of(context);
+    controller.selectedLanguageNotifier.value = _selectedLanguage;
   }
 
   @override
   Widget build(BuildContext context) {
-    final percentageController = PercentageDropdownController.of(context);
-    percentageController.setLanguageDropdownButtonState(this);
+    final controller = PercentageDropdownController.of(context);
+    controller.setLanguageDropdownButtonState(this);
 
     return DropdownButton<String>(
       value: _selectedLanguage,
@@ -314,9 +331,9 @@ class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
         setState(() {
           _selectedLanguage = newValue!;
         });
+        controller.selectedLanguageNotifier.value = _selectedLanguage;
       },
-      items: <String>['עברית','אנגלית'] // Define your language options here
-          .map<DropdownMenuItem<String>>((String value) {
+      items: <String>['עברית', 'אנגלית'].map((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),
@@ -324,27 +341,55 @@ class _LanguageDropdownButtonState extends State<_LanguageDropdownButton> {
       }).toList(),
     );
   }
+
+  String getSelectedLanguage() => _selectedLanguage;
 }
 
-
-
-
-class _BookStartDropdownButton extends StatefulWidget {
+class _VersionDropdownButton extends StatefulWidget {
   @override
-  _BookStartDropdownButtonState createState() => _BookStartDropdownButtonState();
+  _VersionDropdownButtonState createState() => _VersionDropdownButtonState();
 }
 
-class _BookStartDropdownButtonState extends State<_BookStartDropdownButton> {
-  String _selectedBookStart = 'בראשית'; // Default language
-
-  String getSelectedBookStart() {
-    return _selectedBookStart;
-  }
+class _VersionDropdownButtonState extends State<_VersionDropdownButton> {
+  String _selectedVersion = 'מודרני';
 
   @override
   Widget build(BuildContext context) {
-    final percentageController = PercentageDropdownController.of(context);
-    percentageController.setBookStartDropdownButtonState(this);
+    final controller = PercentageDropdownController.of(context);
+    controller.setVersionDropdownButtonState(this);
+
+    return DropdownButton<String>(
+      value: _selectedVersion,
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedVersion = newValue!;
+        });
+      },
+      items: <String>['מודרני', 'דליטש'].map((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+    );
+  }
+
+  String getSelectedVersion() => _selectedVersion;
+}
+
+class _BookStartDropdownButton extends StatefulWidget {
+  @override
+  _BookStartDropdownButtonState createState() =>
+      _BookStartDropdownButtonState();
+}
+
+class _BookStartDropdownButtonState extends State<_BookStartDropdownButton> {
+  String _selectedBookStart = 'בראשית';
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = PercentageDropdownController.of(context);
+    controller.setBookStartDropdownButtonState(this);
 
     return DropdownButton<String>(
       value: _selectedBookStart,
@@ -353,7 +398,7 @@ class _BookStartDropdownButtonState extends State<_BookStartDropdownButton> {
           _selectedBookStart = newValue!;
         });
       },
-      items: Script.booksH.map<DropdownMenuItem<String>>((String value) {
+      items: Script.booksH.map((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),
@@ -361,23 +406,22 @@ class _BookStartDropdownButtonState extends State<_BookStartDropdownButton> {
       }).toList(),
     );
   }
+
+  String getSelectedBookStart() => _selectedBookStart;
 }
+
 class _BookEndDropdownButton extends StatefulWidget {
   @override
   _BookEndDropdownButtonState createState() => _BookEndDropdownButtonState();
 }
 
 class _BookEndDropdownButtonState extends State<_BookEndDropdownButton> {
-  String _selectedBookEnd = 'התגלות'; // Default language
-
-  String getSelectedBookEnd() {
-    return _selectedBookEnd;
-  }
+  String _selectedBookEnd = 'התגלות';
 
   @override
   Widget build(BuildContext context) {
-    final percentageController = PercentageDropdownController.of(context);
-    percentageController.setBookEndDropdownButtonState(this);
+    final controller = PercentageDropdownController.of(context);
+    controller.setBookEndDropdownButtonState(this);
 
     return DropdownButton<String>(
       value: _selectedBookEnd,
@@ -386,7 +430,7 @@ class _BookEndDropdownButtonState extends State<_BookEndDropdownButton> {
           _selectedBookEnd = newValue!;
         });
       },
-      items: Script.booksH.reversed.map<DropdownMenuItem<String>>((String value) {
+      items: Script.booksH.reversed.map((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),
@@ -394,4 +438,6 @@ class _BookEndDropdownButtonState extends State<_BookEndDropdownButton> {
       }).toList(),
     );
   }
+
+  String getSelectedBookEnd() => _selectedBookEnd;
 }
